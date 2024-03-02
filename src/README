@@ -1,0 +1,49 @@
+Stefan Alexia 332CB
+Tema2 APD
+
+# MyDispatcher:
+
+- In functie de algoritm, apelez una din cele 4 functii (algorithm_RoundRobin, algorithm_ShortestQueue, algorithm_SizeIntervalTaskAssignment, algorithm_LeastWorkLeft).
+
+* algorithm_RoundRobin(Task task):
+	- respect indrumarile din cerinta: task-urile sunt date nodului (id+1)%nr_noduri
+	- id-ul de inceput este 0
+
+* algorithm_ShortestQueue(Task task):
+	- task-ul este alocat nodului cu coada de asteptare minima
+	- functia ajutatoare principala este getQueueSize() din MyHost ce returneaza diferenta dintre numarul total de task-uri primite de nod si
+	task-urile terminate. Numarul total de task-uri primite de nod este dat de o variabila care este mereu incrementata la apelul functiei addTask(), iar finishedTasks o variabila mereu incrementata
+	cand un task apeleaza finish() in run().
+
+* algorithm_LeastWorkLeft(Task task):
+	- pe fix acelasi principiu precum SQ, doar ca functia principala ajutatoare este host.getWorkLeft() din MyHost.
+	- getWorkLeft(): o functie prin care se itereaza prin fiecare task care a ajuns in nod (prin fiecare lista de task-uri a fiecarui element din map-ul <timp_start, ListaTasks>) si se returneaza suma tuturor variabilelor membru left ale task-urilor
+
+* algorithm_SizeIntervalTaskAssignment(Task task):
+	- cel mai simplu dintre cazuri: in functie de tipul taskului se alege nodul/hostul corespunzator.
+	- hosts[0] pt short, hosts[1] pentru medium, hosts[2] pentru long
+
+
+# MyHost:
+
+- HashMap<Long, LinkedList<Task>> addedTasks reprezinta un map in care salvez fiecare task dupa timpul lui de start
+- LinkedList<Task> runningTasks lista ("coada") pe care o folosesc pentru a adauga task-urile in functie de prioritate si preemptibilitate.
+- int oneSec variabila pentru a stii cand trece 1 secunda (care devine si cheia pentru taskuri cand apelez updateRunningTasks)
+- totalTasks, finishedTasks le-am mentionat mai sus.
+- isItRunning imi spune practic cand sa opresc thread-ul
+
+* run():
+	- cat timp am task-uri care ruleaza sau vor rula //sau// isItRunning este true functia run a thread-ului merge
+	- daca a trecut mai mult de 1 secunda si runningTasks nu e gol actualizez .left-ul taskului (a primului element din runningTasks pt a imita comportamentul de coada)
+	- cand .left devine negativ atunci task-ul si a consumat durata de viata, deci ii putem da remove
+	- fac sleep de 950 de msec (ptc pot primi un task cu start time-ul de 0 la 0.005 sec)
+	- actualizez lista de runningTasks pentru task-urile cu start time ul oneSec.
+	- dupa ce trec 999 de msec (aka ~ 1 sec) pot incrementa oneSec.
+
+* updateRunningTasks(int seconds):
+	am urmatoarele cazuri:
+	- daca lista este goala, doar adaug task-ul in lista
+	- daca primul element al listei are .preempt == true, adaug task-ul la inceputul listei (daca si .priority este mai mare decat a primului element din lista)
+	- adaug task-ul dupa primul element si inaintea primului cu o prioritate mai mica (pt asta folosesc functie ajutatoare addTaskInOrder())
+
+* restul functiilor au fost explicate cand am precizat metodele din MyDispatcher
